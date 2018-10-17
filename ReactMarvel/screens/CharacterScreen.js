@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View, FlatList } from 'react-native';
+import { Image, StyleSheet, Text, View, FlatList, ActivityIndicator, ToastAndroid } from 'react-native';
 
 import CharacterService from '../services/CharacterService'
 
@@ -9,21 +9,42 @@ export default class CharacterScreen extends React.Component {
     super()
 
     this.state = {
-      characters: []
+      characters: [],
+      currentPage: 1,
+      loading: false
     }
   }
 
   componentDidMount() {
 
-    CharacterService.findAllCharacters().then(response => { 
-      this.setState({ characters: response.data.data.results })
+    this.setState({ loading: true }, this.loadCharacters);
+  }
+
+  loadCharacters = (pageNumber = 1) => {
+
+    CharacterService.findAllCharacters(pageNumber).then(response => {
+      
+      this.setState(state => ({
+        characters: response.data.data.results,
+        currentPage: pageNumber,
+        loading: false
+      }))
     })
+      .catch(error => ToastAndroid.show(JSON.stringify(error), ToastAndroid.LONG))
+      .finally(() => this.setState({ loading: false }))
+  }
+
+  getNextPage = () => {
+    const { currentPage, loading } = this.state;
+
+    if (!loading) {
+      this.loadCharacters(currentPage + 1);
+    }
   }
 
   keyExtractor = item => item.id.toString();
 
   renderItem = ({ item }) => {
-
     return (
       <View>
         <View>
@@ -38,17 +59,17 @@ export default class CharacterScreen extends React.Component {
 
   render() {
 
-    const { characters } = this.state
+    const { characters, loading } = this.state
 
     return (
-
-        
-      <FlatList
-        data={characters}
-        renderItem={this.renderItem}
-        keyExtractor={this.keyExtractor}>
-      </FlatList> 
-
+      loading ? <ActivityIndicator size="large" color="#0000ff" /> :
+        <FlatList
+          data={characters}
+          renderItem={this.renderItem}
+          keyExtractor={this.keyExtractor}
+          onEndReached={this.getNextPage}
+          onEndReachedThreshold={0.6}>
+        </FlatList>
     );
   }
 }
