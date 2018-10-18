@@ -1,14 +1,14 @@
 import { getHash, PUBLIC_KEY } from './HashUtils'
 
-const axios = require('axios')
+const axios = require('axios') 
 
 const CharacterService = {
 
-    findAllCharacters: (pageNumber = 1) => {
+    findAllCharacters: (pageNumber = 0) => {
         const timestamp = Number(new Date())
 
-        const limit = pageNumber * 10;
-        const offset = limit - 10;
+        const limit = 100;
+        const offset = pageNumber < 5 ? pageNumber * 20 : 100;
 
         const hash = getHash();
 

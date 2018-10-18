@@ -10,7 +10,7 @@ export default class CharacterScreen extends React.Component {
 
     this.state = {
       characters: [],
-      currentPage: 1,
+      currentPage: 0,
       loading: false
     }
   }
@@ -20,15 +20,17 @@ export default class CharacterScreen extends React.Component {
     this.setState({ loading: true }, this.loadCharacters);
   }
 
-  loadCharacters = (pageNumber = 1) => {
+  loadCharacters = (pageNumber = 0) => {
 
     CharacterService.findAllCharacters(pageNumber).then(response => {
-      
-      this.setState(state => ({
-        characters: response.data.data.results,
+
+      const data = response.data.data.results.filter(r => !r.thumbnail.path.includes('image_not_available'));
+
+      this.setState({
+        characters: data,
         currentPage: pageNumber,
         loading: false
-      }))
+      })
     })
       .catch(error => ToastAndroid.show(JSON.stringify(error), ToastAndroid.LONG))
       .finally(() => this.setState({ loading: false }))
@@ -46,12 +48,9 @@ export default class CharacterScreen extends React.Component {
 
   renderItem = ({ item }) => {
     return (
-      <View>
+      <View style={styles.item} onPressItem={this.onPressItem}>
         <View>
           <Image source={{ uri: `${item.thumbnail.path}.${item.thumbnail.extension}` }} style={styles.image}></Image>
-        </View>
-        <View>
-          <Text>{item.name}</Text>
         </View>
       </View>
     )
@@ -64,6 +63,7 @@ export default class CharacterScreen extends React.Component {
     return (
       loading ? <ActivityIndicator size="large" color="#0000ff" /> :
         <FlatList
+          style={styles.container}
           data={characters}
           renderItem={this.renderItem}
           keyExtractor={this.keyExtractor}
@@ -77,20 +77,13 @@ export default class CharacterScreen extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff'
   },
-  contentContainer: {
-    paddingTop: 30,
-  },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+  item: {
+    flexDirection: 'row'
   },
   image: {
-    width: 65,
-    height: 65,
-    borderRadius: 50,
-    marginRight: 10
+    width: 400,
+    height: 150
   }
 });
